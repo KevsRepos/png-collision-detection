@@ -1,6 +1,11 @@
-let canvas, ctx, imgs;
+let canvas, ctx, element, images;
 
-export const collision = node => {
+const globalAlpha = 0.6;
+const collisionAlpha = 154;
+// 255 = 100%; 0.6 = 60%; 154 > 60%
+
+export const collisionDetection = (node) => {
+    element = node;
     const {width, height} = node.getBoundingClientRect();
 
     canvas = Object.assign(document.createElement('canvas'), {
@@ -9,27 +14,28 @@ export const collision = node => {
     });
 
     ctx = canvas.getContext('2d');
-    ctx.globalAlpha = 0.6;
+    ctx.globalAlpha = globalAlpha;
 
-    imgs = node.querySelectorAll('img');
+    images = [...node.querySelectorAll('img')];
 
-    Promise.all(Array.from(imgs).filter(img => !img.complete).map(img => new Promise(resolve => { img.onload = img.onerror = resolve; }))).then(() => {
-        imgs.forEach(img => {
-            ctx.drawImage(img, img.offsetLeft, img.offsetTop, img.offsetWidth, img.offsetHeight);
-        })
-    });
-}
+    const watchImages = new MutationObserver((mut) => {
+        if(mut[0].addedNodes[0].constructor.name !== 'HTMLImageElement') return;
 
-const getTransform = img => {
-    const {m41, m42} = new DOMMatrix(window.getComputedStyle(img).transform)
-    return {x: m41, y: m42}
+        images.push(mut[0].addedNodes[0]);
+    })
+
+    watchImages.observe(node, {
+        childList: true
+    })
+
+    document.querySelector('main').appendChild(canvas)
 }
 
 const searchAlphaValues = () => {
     const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
 
     for (let i = 3; i < pixels.length; i += 4) {
-        if(pixels[i] >= 214) {
+        if(pixels[i] >= collisionAlpha) {
             return true;
         }
     }
@@ -37,16 +43,33 @@ const searchAlphaValues = () => {
     return false;
 }
 
+const getTransformMatrix = img => {
+    return new DOMMatrix(window.getComputedStyle(img).transform);
+}
+
 export const isColliding = () => {
-    if(!ctx || !imgs.length) return;
+    if(!ctx || !images.length) return;
 
-    ctx.fillStyle = '#ffffff';
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    for (const img of images) {
+        const matrix = getTransformMatrix(img)
 
-    imgs?.forEach(img => {
-        const {x, y} = getTransform(img);
-        ctx.drawImage(img, (x || img.offsetLeft), (y || img.offsetTop), img.offsetWidth, img.offsetHeight);
-    })
+        ctx.save()
+
+        if(matrix.a && matrix.b && matrix.c && matrix.d) {
+            console.log(x, y);
+            ctx.setTransform(
+                matrix.m11, matrix.m12, matrix.m13,
+                matrix.m21, matrix.m22, matrix.m23
+            );
+        }
+
+        ctx.drawImage(img, x - img.offsetParent.offsetLeft, y - img.offsetParent.offsetTop, img.offsetWidth, img.offsetHeight)
+
+        ctx.restore()
+    }
 
     return searchAlphaValues();
 }
+
