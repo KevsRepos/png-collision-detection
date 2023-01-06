@@ -4,7 +4,7 @@ const globalAlpha = 0.6;
 const collisionAlpha = 154;
 // 255 = 100%; 0.6 = 60%; 154 > 60%
 
-export const collisionDetection = (node: HTMLElement, {borders, control = false}: any) => {
+export const collisionDetection = (node: HTMLElement, {borders = false, control = false}: any) => {
     element = node;
     boundBorder = borders;
 
