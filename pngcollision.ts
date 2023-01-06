@@ -12,7 +12,8 @@ export const collisionDetection = (node: HTMLElement, {borders, control = false}
 
     canvas = Object.assign(document.createElement('canvas'), {
         width: width,
-        height: height
+        height: height,
+        style: `position: fixed; top: 0px; left: 0px;`
     });
 
     ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
@@ -66,8 +67,8 @@ export const draw = () => {
         const angle = Number(window.getComputedStyle(img).rotate.slice(0, -3));
         
         ctx.save();
-
-        ctx.translate(x - element.offsetLeft + (width / 2), y - element.offsetTop + (height / 2));
+        
+        ctx.translate(x - element.offsetLeft + document.documentElement.scrollLeft + (width / 2), y - element.offsetTop + document.documentElement.scrollTop + (height / 2));
 
         if(angle > 0) {
             ctx.rotate(angle * Math.PI / 180);
