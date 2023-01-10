@@ -31,15 +31,14 @@ export const collisionDetection = (node: HTMLElement, {borders = false, control 
         attributeFilter: ['style']
     });
 
-    const watchImages = new MutationObserver((mut) => {
-        images.push(mut[0]?.addedNodes[0]?.querySelector('img'));
+    const watchImages = new MutationObserver(() => {
+        images = [...node.querySelectorAll('img')];
     })
 
     watchImages.observe(node, {
         childList: true
     })
-
-    
+ 
     control && document.querySelector('main')?.appendChild(canvas);
 }
 
