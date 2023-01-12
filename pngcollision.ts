@@ -1,19 +1,33 @@
-let canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, element: HTMLElement, images: Array<HTMLImageElement>, boundBorder: boolean;
+let 
+canvas: HTMLCanvasElement, 
+ctx: CanvasRenderingContext2D, 
+element: HTMLElement, 
+images: Array<HTMLImageElement>, 
+boundBorder: boolean,
+nodeRect: DOMRect;
 
 const globalAlpha = 0.6;
 const collisionAlpha = 154;
 // 255 = 100%; 0.6 = 60%; 154 > 60%
 
+const drawBorder = () => {
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, window.innerWidth, nodeRect.top);
+    ctx.fillRect(nodeRect.left + nodeRect.width, nodeRect.top, window.innerWidth - nodeRect.left + nodeRect.width, window.innerHeight);
+    ctx.fillRect(0, nodeRect.top + nodeRect.height, nodeRect.left + nodeRect.width, window.innerHeight - nodeRect.top + nodeRect.height);
+    ctx.fillRect(0, nodeRect.top, nodeRect.left, nodeRect.height);
+}
+
 export const collisionDetection = (node: HTMLElement, {borders = false, control = false}: any) => {
     element = node;
     boundBorder = borders;
 
-    const {width, height} = node.getBoundingClientRect();
+    nodeRect = node.getBoundingClientRect();
 
     canvas = Object.assign(document.createElement('canvas'), {
-        width: width,
-        height: height,
-        style: `position: fixed; top: 0px; left: 0px;`
+        width: window.innerWidth,
+        height: window.innerHeight,
+        style: `position: fixed; top: 0px; left: 0px; z-index: -1;`
     });
 
     ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
@@ -22,9 +36,7 @@ export const collisionDetection = (node: HTMLElement, {borders = false, control 
     images = [...node.querySelectorAll(`img`)];
 
     const watchSize = new MutationObserver(() => {
-        const {width, height} = node.getBoundingClientRect();
-        canvas.width = width;
-        canvas.height = height;
+        nodeRect = node.getBoundingClientRect();
     });
 
     watchSize.observe(node, {
@@ -67,7 +79,7 @@ export const draw = () => {
         
         ctx.save();
         
-        ctx.translate(x - element.offsetLeft + document.documentElement.scrollLeft + (width / 2), y - element.offsetTop + document.documentElement.scrollTop + (height / 2));
+        ctx.translate(x - img.offsetLeft + document.documentElement.scrollLeft + (width / 2), y - img.offsetTop + document.documentElement.scrollTop + (height / 2));
 
         if(angle > 0) {
             ctx.rotate(angle * Math.PI / 180);
@@ -83,8 +95,7 @@ export const isColliding = () => {
     draw();
 
     if(boundBorder) {
-        ctx.strokeStyle = '#000000';
-        ctx.strokeRect(0, 0, canvas.width - 1, canvas.height - 1);
+        drawBorder();
     }
 
     return searchAlphaValues();
